@@ -1,0 +1,6 @@
+{
+  "coc.preferences.formatOnSaveFiletypes": [],
+  "tsserver.formatOnType": true,
+  "coc.preferences.formatOnType": true
+}
+
