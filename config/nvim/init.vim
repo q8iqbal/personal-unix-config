@@ -22,11 +22,16 @@ Plug 'jiangmiao/auto-pairs'
 
 Plug 'Tsuzat/NeoSolarized.nvim', { 'branch': 'master' }
 
+Plug 'akinsho/toggleterm.nvim', {'tag' : '*'}
+
+Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npx --yes yarn install' }
+
 call plug#end()
 
+lua require("toggleterm").setup()
 
 autocmd!
-
+set splitbelow
 set nocompatible
 set number
 syntax enable
@@ -43,7 +48,7 @@ set expandtab
 set cmdheight=1
 set laststatus=2
 set scrolloff=10
-set shell=fish
+set shell=bash
 
 colorscheme NeoSolarized
 hi Normal guibg=none
