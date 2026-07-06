@@ -1,5 +1,15 @@
 call plug#begin('~/.vim/plugged')
 
+Plug 'amitds1997/remote-nvim.nvim', {'tag': '*'}
+
+"remote.nvim dependencies
+
+Plug 'MunifTanjim/nui.nvim', {'tag': '*'}
+
+"end of remote.nvim dependencies
+
+Plug 'lewis6991/gitsigns.nvim', {'tag': '*'}
+
 Plug 'preservim/nerdtree'
 
 Plug 'junegunn/limelight.vim'
@@ -26,7 +36,19 @@ Plug 'akinsho/toggleterm.nvim', {'tag' : '*'}
 
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && npx --yes yarn install' }
 
+Plug 'nvim-tree/nvim-web-devicons', {'tag' : '*'}
+
+Plug 'nvim-lua/plenary.nvim', {'tag' : '*'}
+
+Plug 'nvim-pack/nvim-spectre'
+
+Plug 'folke/trouble.nvim', {'tag' : '*'}
+
 call plug#end()
+
+lua << EOF
+require("remote-nvim").setup()
+EOF
 
 lua << EOF
 require("toggleterm").setup({
@@ -39,7 +61,7 @@ require("toggleterm").setup({
   start_in_insert = true,
   insert_mappings = true,
   persist_size = true,
-  direction = "horizontal",
+  direction = "float",
   close_on_exit = true,
   shell = vim.o.shell,
   float_opts = {
@@ -66,6 +88,12 @@ require('nvim-treesitter').setup({
 EOF
 
 lua << EOF
+require('gitsigns').setup{
+  current_line_blame = true
+}
+EOF
+
+lua << EOF
 require('telescope').setup({
   defaults = {
     preview = {
@@ -73,6 +101,17 @@ require('telescope').setup({
     }
   }
 })
+
+local builtin = require('telescope.builtin')
+
+vim.keymap.set('n', '<leader>fG', function()
+  local pattern = vim.fn.input("Pattern (e.g., 'src/' or '!tests/'): ")
+  builtin.live_grep({
+    additional_args = function()
+      return { "--glob", pattern }
+    end
+  })
+end)
 EOF
 
 autocmd!
@@ -188,6 +227,12 @@ nnoremap <leader>fg <cmd>Telescope live_grep<cr>
 nnoremap <leader>fb <cmd>Telescope buffers<cr>
 nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 nnoremap <C-p> <cmd>Telescope find_files<cr>
+
+"Spectre keybindings
+nnoremap <leader>S <cmd>lua require("spectre").toggle()<CR>
+nnoremap <leader>sw <cmd>lua require("spectre").open_visual({select_word=true})<CR>
+vnoremap <leader>sw <esc><cmd>lua require("spectre").open_visual()<CR>
+nnoremap <leader>sp <cmd>lua require("spectre").open_file_search({select_word=true})<CR>
 
 
 let g:user_emmet_leader_key='<Tab>'

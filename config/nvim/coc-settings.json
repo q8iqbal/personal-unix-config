@@ -7,6 +7,8 @@
       "filetypes": ["terraform", "tf"],
       "initializationOptions": {}
     }
-  }
+  },
+  "pylsp.plugins.pycodestyle.enabled": false,
+  "pylsp.plugins.flake8.enabled": true,
+  "pylsp.plugins.pylint.enabled": false
 }
-
