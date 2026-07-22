@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# aws-ssm-forward — SSM port forward to an EC2 instance
+# Usage:
+#   aws-ssm-forward <name-tag> <remote-port> [local-port]       (default: by Name tag)
+#   aws-ssm-forward --id <instance-id> <remote-port> [local-port]
+
+set -euo pipefail
+
+usage() {
+  cat <<EOF
+Usage:
+  aws-ssm-forward <name-tag> <remote-port> [local-port]
+  aws-ssm-forward --id <instance-id> <remote-port> [local-port]
+
+Options:
+  --id    Use instance ID directly instead of Name tag
+
+If local-port is omitted, it defaults to the same as remote-port.
+EOF
+  exit 1
+}
+
+# Parse arguments
+if [[ "${1:-}" == "--id" ]]; then
+  shift
+  instance_id="${1:?Missing instance ID. $(usage)}"
+  shift
+else
+  name_tag="${1:?Missing Name tag. $(usage)}"
+  shift
+
+  instance_id=$(aws ec2 describe-instances \
+    --filters "Name=tag:Name,Values=${name_tag}" "Name=instance-state-name,Values=running" \
+    --query "Reservations[].Instances[].InstanceId" \
+    --output text)
+
+  if [[ -z "$instance_id" ]]; then
+    echo "Error: No running instance found with Name tag '${name_tag}'" >&2
+    exit 1
+  fi
+
+  # If multiple instances match, warn and use the first
+  instance_count=$(echo "$instance_id" | wc -w)
+  if [[ "$instance_count" -gt 1 ]]; then
+    echo "Warning: ${instance_count} instances match Name '${name_tag}', using first: $(echo "$instance_id" | awk '{print $1}')" >&2
+    instance_id=$(echo "$instance_id" | awk '{print $1}')
+  fi
+fi
+
+remote_port="${1:?Missing remote port. $(usage)}"
+local_port="${2:-$remote_port}"
+
+echo "Starting port forward: localhost:${local_port} → ${instance_id}:${remote_port}"
+
+aws ssm start-session \
+  --target "$instance_id" \
+  --document-name AWS-StartPortForwardingSession \
+  --parameters "{\"portNumber\":[\"${remote_port}\"],\"localPortNumber\":[\"${local_port}\"]}"

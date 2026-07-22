@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# AWS helpers completion - all completions in one file
+# Source this from .bashrc
+
+# --- aws CLI completion ---
+complete -C '/usr/local/bin/aws_completer' aws
+
+# --- aws-profile / aws-refresh-credentials completion ---
+_aws_profiles="$(grep '\[profile' ~/.aws/config | tr -d '\[\]' | awk '{print $2}')"
+complete -W "${_aws_profiles}" aws-profile
+complete -W "${_aws_profiles}" aws-refresh-credentials
+
+# --- aws-console completion ---
+_aws_console_pages="acm amplify apigateway appflow appmesh appsync artifact athena awsautoscaling backup batch billing chatbot cloudformation cloudfront cloudhsm cloudmap cloudsearch cloudtrail cloudwatch codebuild codecommit codedeploy codeguru codepipeline codestar codesuite cognito comprehend config connect console controltower dataexchange datapipeline datasync deepcomposer deepracer detective devicedefender devicefarm directconnect discovery dms docdb dynamodb ec2 ecr ecs efs eks elasticache elasticbeanstalk elasticmapreduce elastictranscoder es events forecast frauddetector freertos fsx gamelift glacier glue groundstation guardduty iam imagebuilder importexport iot iotanalytics iotdm iotevents iotsitewise kendra keyspaces kinesis kinesisvideo kms lakeformation lambda launchwizard lex machinelearning managedblockchain managedservices marketplace mediaconnect medialive mediapackage mediastore mediatailor migrationhub mobilehub msk neptune opsworks organizations outposts personalize pinpoint polly qldb ram rds redshift rekognition robomaker s3 sagemaker secretsmanager securityhub serverlessrepo servermigration servicecatalog servicequotas ses singlesignon sns sqs states storagegateway support swf textract thingsgraph transcribe transfer translate trustedadvisor vpc wellarchitected worklink workmail workspaces xray zocalo"
+complete -W "${_aws_console_pages}" aws-console
+
+# --- aws-ssm / aws-ssm-forward completion ---
+_aws_ssm_completion() {
+  local cur prev
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+  if [[ "$prev" == "--id" ]]; then
+    return
+  fi
+
+  if [[ $COMP_CWORD -eq 1 ]]; then
+    if [[ "$cur" == -* ]]; then
+      COMPREPLY=($(compgen -W "--id" -- "$cur"))
+    else
+      local cache_file="/tmp/.aws-ssm-names-${AWS_PROFILE:-default}"
+      local cache_age=61
+
+      if [[ -f "$cache_file" ]]; then
+        cache_age=$(( $(date +%s) - $(stat -c %Y "$cache_file") ))
+      fi
+
+      if [[ $cache_age -gt 60 ]]; then
+        aws ec2 describe-instances \
+          --filters "Name=instance-state-name,Values=running" \
+          --query 'Reservations[].Instances[].Tags[?Key==`Name`].Value[]' \
+          --output text 2>/dev/null | tr '\t' '\n' | sort -u > "$cache_file"
+      fi
+
+      local IFS=$'\n'
+      COMPREPLY=($(compgen -W "$(cat "$cache_file" 2>/dev/null)" -- "$cur"))
+    fi
+    return
+  fi
+}
+
+complete -F _aws_ssm_completion aws-ssm
+complete -F _aws_ssm_completion aws-ssm-forward

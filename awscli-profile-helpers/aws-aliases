@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# AWS resource listing aliases
+
+alias ec2ls='aws ec2 describe-instances --query "Reservations[].Instances[].{InstanceId:InstanceId,Name:Tags[?Key==\`Name\`]|[0].Value,IP:PrivateIpAddress,Type:InstanceType,Status:State.Name}" --output table'
+alias rdsls='aws rds describe-db-instances --query "DBInstances[*].[DBInstanceIdentifier,DBInstanceClass,Engine,DBInstanceStatus,Endpoint.Address]" --output table'
+alias vpcls='aws ec2 describe-vpcs --query "Vpcs[].{VpcId:VpcId,Name:Tags[?Key==\`Name\`]|[0].Value,CIDR:CidrBlock,State:State}" --output table'
+alias subnetls='aws ec2 describe-subnets --query "Subnets[].{SubnetId:SubnetId,Name:Tags[?Key==\`Name\`]|[0].Value,VpcId:VpcId,CIDR:CidrBlock,AZ:AvailabilityZone}" --output table'
+alias elasticachels='aws elasticache describe-cache-clusters --query "CacheClusters[].{ClusterId:CacheClusterId,Engine:Engine,NodeType:CacheNodeType,Status:CacheClusterStatus,Nodes:NumCacheNodes}" --output table'
