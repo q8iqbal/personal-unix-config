@@ -5,4 +5,14 @@ alias ec2ls='aws ec2 describe-instances --query "Reservations[].Instances[].{Ins
 alias rdsls='aws rds describe-db-instances --query "DBInstances[*].[DBInstanceIdentifier,DBInstanceClass,Engine,DBInstanceStatus,Endpoint.Address]" --output table'
 alias vpcls='aws ec2 describe-vpcs --query "Vpcs[].{VpcId:VpcId,Name:Tags[?Key==\`Name\`]|[0].Value,CIDR:CidrBlock,State:State}" --output table'
 alias subnetls='aws ec2 describe-subnets --query "Subnets[].{SubnetId:SubnetId,Name:Tags[?Key==\`Name\`]|[0].Value,VpcId:VpcId,CIDR:CidrBlock,AZ:AvailabilityZone}" --output table'
-alias elasticachels='aws elasticache describe-cache-clusters --query "CacheClusters[].{ClusterId:CacheClusterId,Engine:Engine,NodeType:CacheNodeType,Status:CacheClusterStatus,Nodes:NumCacheNodes}" --output table'
+alias elasticachels='aws elasticache describe-cache-clusters --show-cache-node-info --query "CacheClusters[].{ClusterId:CacheClusterId,Engine:Engine,NodeType:CacheNodeType,Status:CacheClusterStatus,Nodes:NumCacheNodes,Endpoint:ConfigurationEndpoint.Address||CacheNodes[0].Endpoint.Address}" --output table'
+
+eksngls() {
+  for cluster in $(aws eks list-clusters --query "clusters[]" --output text); do
+    for ng in $(aws eks list-nodegroups --cluster-name "$cluster" --query "nodegroups[]" --output text); do
+      aws eks describe-nodegroup --cluster-name "$cluster" --nodegroup-name "$ng" \
+        --query "nodegroup.{Cluster:clusterName,NodeGroup:nodegroupName,Status:status,InstanceType:instanceTypes[0],Desired:scalingConfig.desiredSize,Min:scalingConfig.minSize,Max:scalingConfig.maxSize,AMI:amiType,K8sVersion:version}" \
+        --output table
+    done
+  done
+}
